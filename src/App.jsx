@@ -336,7 +336,7 @@ export default function App() {
             {/* Step Increment Selector */}
             <div className="step-selector-wrap" role="group" aria-label="Step increment multiplier">
               <span className="step-label">Step:</span>
-              {[1, 5, 10, 50, 100].map((val) => (
+              {[1, 5, 10, 100].map((val) => (
                 <button
                   key={val}
                   id={`step-chip-${val}`}
