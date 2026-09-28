@@ -60,7 +60,6 @@ export default function App() {
   });
 
   const [step, setStep] = useState(1);
-  const [theme, setTheme] = useState(() => localStorage.getItem('pulse_theme') || 'dark');
   const [soundMuted, setSoundMuted] = useState(() => localStorage.getItem('pulse_sound_muted') === 'true');
   const [particles, setParticles] = useState([]);
   const [isPulse, setIsPulse] = useState(false);
@@ -72,11 +71,11 @@ export default function App() {
   const clickTimestamps = useRef([]);
   const pulseTimeoutRef = useRef(null);
 
-  // Sync theme to root DOM
+  // Lock to plain white light theme
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('pulse_theme', theme);
-  }, [theme]);
+    document.documentElement.setAttribute('data-theme', 'light');
+    localStorage.setItem('pulse_theme', 'light');
+  }, []);
 
   // Sync sound muted status
   useEffect(() => {
@@ -209,8 +208,6 @@ export default function App() {
         setShowResetConfirm(true);
       } else if (e.key === 'm' || e.key === 'M') {
         setSoundMuted((prev) => !prev);
-      } else if (e.key === 't' || e.key === 'T') {
-        setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
       } else if (e.key === '?') {
         setShowShortcuts((prev) => !prev);
       } else if (e.key === 'Escape') {
@@ -236,13 +233,6 @@ export default function App() {
 
   return (
     <>
-      {/* Background Animated Atmosphere */}
-      <div className="bg-ambient" aria-hidden="true">
-        <div className="ambient-blob-1" />
-        <div className="ambient-blob-2" />
-        <div className="ambient-blob-3" />
-      </div>
-
       {/* Floating Click Particles */}
       {particles.map((p) => (
         <span
@@ -280,16 +270,6 @@ export default function App() {
               aria-label="Toggle Sound"
             >
               {soundMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-            </button>
-
-            <button
-              id="theme-toggle-btn"
-              className="icon-btn"
-              onClick={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
-              title={`Switch to ${theme === 'dark' ? 'Cyber Sapphire' : 'Midnight Obsidian'} Theme (T)`}
-              aria-label="Toggle Theme"
-            >
-              {theme === 'dark' ? <Zap size={18} /> : <Moon size={18} />}
             </button>
 
             <button
@@ -513,10 +493,6 @@ export default function App() {
               <div className="shortcut-row">
                 <span>Toggle Sound Effects</span>
                 <kbd className="key-kbd">M</kbd>
-              </div>
-              <div className="shortcut-row">
-                <span>Toggle Dark / Light Theme</span>
-                <kbd className="key-kbd">T</kbd>
               </div>
               <div className="shortcut-row">
                 <span>Close Dialog</span>
