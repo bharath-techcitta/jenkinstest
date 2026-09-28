@@ -336,7 +336,7 @@ export default function App() {
             {/* Step Increment Selector */}
             <div className="step-selector-wrap" role="group" aria-label="Step increment multiplier">
               <span className="step-label">Step:</span>
-              {[1, 5, 10, 50].map((val) => (
+              {[1, 5, 10, 50, 100].map((val) => (
                 <button
                   key={val}
                   id={`step-chip-${val}`}
@@ -349,7 +349,7 @@ export default function App() {
               ))}
             </div>
 
-            {/* Secondary Controls: Decrement and Reset */}
+            {/* Secondary Controls: Decrement, +100 Button, and Reset */}
             <div className="action-buttons">
               <button
                 id="decrement-btn"
@@ -361,6 +361,31 @@ export default function App() {
               >
                 <Minus size={16} />
                 <span>-{step}</span>
+              </button>
+
+              <button
+                id="add-100-btn"
+                className="action-btn"
+                style={{ borderColor: 'var(--badge-border)', color: 'var(--accent-primary)', fontWeight: 700 }}
+                onClick={() => {
+                  setCount((prev) => {
+                    const nextVal = prev + 100;
+                    const crossed = MILESTONES.find((m) => prev < m && nextVal >= m);
+                    if (crossed) triggerMilestoneCelebration(crossed);
+                    else sound.playClick(1.25);
+                    return nextVal;
+                  });
+                  setTotalClicks((prev) => prev + 1);
+                  clickTimestamps.current.push(Date.now());
+                  setIsPulse(true);
+                  if (pulseTimeoutRef.current) clearTimeout(pulseTimeoutRef.current);
+                  pulseTimeoutRef.current = setTimeout(() => setIsPulse(false), 160);
+                  spawnParticle(undefined, undefined, '+100');
+                }}
+                title="Instantly Add +100"
+              >
+                <Plus size={16} />
+                <span>+100</span>
               </button>
 
               <button
