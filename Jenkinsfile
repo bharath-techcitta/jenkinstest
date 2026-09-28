@@ -7,9 +7,9 @@ pipeline {
     // }
 
     environment {
-        // Securely retrieve the Amplify Webhook URL from Jenkins Credentials (Secret Text)
-        // ID: 'amplify-webhook-url'
-        AMPLIFY_WEBHOOK = credentials('amplify-webhook-url')
+        // Securely retrieve your Vercel Deploy Hook URL from Jenkins Credentials (Secret Text)
+        // Jenkins Credential ID: 'vercel-deploy-hook'
+        VERCEL_DEPLOY_HOOK = credentials('vercel-deploy-hook')
     }
 
     stages {
@@ -22,8 +22,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo 'Installing project dependencies with clean install...'
-                // sh for Linux/macOS agents, bat for Windows agents
+                echo 'Installing project dependencies with npm ci...'
                 script {
                     if (isUnix()) {
                         sh 'npm ci'
@@ -36,7 +35,7 @@ pipeline {
 
         stage('Verify & Build') {
             steps {
-                echo 'Building and validating production bundle with Vite...'
+                echo 'Building and validating Vite production bundle...'
                 script {
                     if (isUnix()) {
                         sh 'npm run build'
@@ -47,19 +46,35 @@ pipeline {
             }
         }
 
-        stage('Deploy to AWS Amplify') {
+        stage('Deploy to Vercel') {
             steps {
-                echo 'Build verified successfully! Triggering AWS Amplify deployment via incoming webhook...'
+                echo 'Build verified successfully! Triggering deployment to Vercel...'
                 script {
+                    // Option 1: Vercel Deploy Hook (Recommended - zero setup, reliable)
                     if (isUnix()) {
                         sh '''
-                            curl -s -X POST -d "{}" "${AMPLIFY_WEBHOOK}" -H "Content-Type: application/json"
+                            response=$(curl -s -o response.txt -w "%{http_code}" -X POST "${VERCEL_DEPLOY_HOOK}")
+                            echo "Vercel Deploy Hook HTTP Response: ${response}"
+                            cat response.txt
+                            if [ "$response" -lt 200 ] || [ "$response" -ge 300 ]; then
+                                echo "ERROR: Vercel deploy hook failed with status ${response}"
+                                exit 1
+                            fi
                         '''
                     } else {
                         bat '''
-                            curl.exe -s -X POST -d "{}" "%AMPLIFY_WEBHOOK%" -H "Content-Type: application/json"
+                            curl.exe -s -o response.txt -w "%%{http_code}" -X POST "%VERCEL_DEPLOY_HOOK%"
+                            type response.txt
                         '''
                     }
+
+                    // Option 2 (Alternative): If you prefer Vercel CLI instead of Deploy Hook,
+                    // comment out the curl above, add VERCEL_TOKEN credentials, and use:
+                    // if (isUnix()) {
+                    //     sh 'npx --yes vercel --prod --token="${VERCEL_TOKEN}" --yes'
+                    // } else {
+                    //     bat 'npx --yes vercel --prod --token="%VERCEL_TOKEN%" --yes'
+                    // }
                 }
             }
         }
@@ -68,14 +83,14 @@ pipeline {
     post {
         success {
             echo '=================================================='
-            echo ' SUCCESS: Pipeline passed all checks!'
-            echo ' AWS Amplify has been notified and is now deploying.'
+            echo ' SUCCESS: Pipeline completed!'
+            echo ' Vercel deployment triggered and is now going live.'
             echo '=================================================='
         }
         failure {
             echo '=================================================='
-            echo ' FAILURE: Pipeline checks failed.'
-            echo ' Deployment was blocked to keep live site safe.'
+            echo ' FAILURE: Build or verification failed.'
+            echo ' Vercel deployment was blocked.'
             echo '=================================================='
         }
     }
