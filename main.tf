@@ -12,26 +12,14 @@ provider "aws" {
   region = var.aws_region
 }
 
-variable "aws_region" {
-  description = "AWS region to deploy Amplify in"
-  type        = string
-  default     = "us-east-1"
-}
+resource "aws_amplify_app" "app" {
+  name       = var.app_name
+  repository = var.repository_url
 
-variable "github_token" {
-  description = "GitHub Personal Access Token (classic with repo scope or fine-grained) for AWS Amplify to access repository"
-  type        = string
-  sensitive   = true
-}
-
-resource "aws_amplify_app" "pulse_count" {
-  name       = "jenkinstest"
-  repository = "https://github.com/bharath-techcitta/jenkinstest"
-
-  # GitHub Personal Access Token for webhook and repository cloning
+  # GitHub Personal Access Token for webhook and repo cloning
   access_token = var.github_token
 
-  # Vite + React (npm) build specification
+  # Build specification for Vite + React (npm)
   build_spec = <<-EOT
     version: 1
     frontend:
@@ -51,7 +39,7 @@ resource "aws_amplify_app" "pulse_count" {
           - node_modules/**/*
   EOT
 
-  # SPA Redirect/Rewrite rule: routes client-side routes to index.html
+  # SPA Rewrite Rule: redirects non-static file routes to index.html with 200
   custom_rule {
     source = "/<*>"
     status = "200"
@@ -59,42 +47,26 @@ resource "aws_amplify_app" "pulse_count" {
   }
 
   environment_variables = {
-    ENV = "production"
+    ENV = var.environment
   }
 
   tags = {
-    Project     = "jenkinstest"
+    Project     = var.app_name
     ManagedBy   = "Terraform"
-    Environment = "production"
+    Environment = var.environment
   }
 }
 
-# Connects and auto-builds the 'main' branch on push
-resource "aws_amplify_branch" "main" {
-  app_id      = aws_amplify_app.pulse_count.id
-  branch_name = "main"
+resource "aws_amplify_branch" "branch" {
+  app_id      = aws_amplify_app.app.id
+  branch_name = var.branch_name
 
   framework = "React"
-  stage     = "PRODUCTION"
+  stage     = upper(var.environment)
 
   enable_auto_build = true
 
   environment_variables = {
-    VITE_APP_ENV = "production"
+    VITE_APP_ENV = var.environment
   }
-}
-
-output "amplify_app_id" {
-  description = "The ID of the Amplify App"
-  value       = aws_amplify_app.pulse_count.id
-}
-
-output "default_domain" {
-  description = "Default Amplify domain for the app"
-  value       = aws_amplify_app.pulse_count.default_domain
-}
-
-output "main_branch_url" {
-  description = "Live URL of the main branch deployment"
-  value       = "https://main.${aws_amplify_app.pulse_count.default_domain}"
 }

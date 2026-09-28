@@ -1,2 +1,11 @@
-aws_region   = "us-east-1"
+# AWS Region
+aws_region = "us-east-1"
+
+# Application and Repository Details
+app_name       = "jenkinstest"
+repository_url = "https://github.com/bharath-techcitta/jenkinstest"
+branch_name    = "main"
+environment    = "production"
+
+# GitHub Personal Access Token (classic with 'repo' scope or fine-grained token)
 github_token = "ghp_your_github_personal_access_token_here"
