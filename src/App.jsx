@@ -286,10 +286,10 @@ export default function App() {
               id="theme-toggle-btn"
               className="icon-btn"
               onClick={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode (T)`}
+              title={`Switch to ${theme === 'dark' ? 'Cyber Sapphire' : 'Midnight Obsidian'} Theme (T)`}
               aria-label="Toggle Theme"
             >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              {theme === 'dark' ? <Zap size={18} /> : <Moon size={18} />}
             </button>
 
             <button
