@@ -418,6 +418,10 @@ export default function App() {
             <kbd className="key-kbd">Enter</kbd>
             <span>to click +{step} rapidly</span>
           </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', fontWeight: 600, color: '#059669', background: '#ecfdf5', padding: '0.25rem 0.75rem', borderRadius: '9999px', border: '1px solid #a7f3d0' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
+            <span>Live CI/CD Deployment &bull; Vercel Active</span>
+          </div>
           <div>PulseCount &copy; {new Date().getFullYear()} &bull; Fast, lightweight React app</div>
         </footer>
       </div>
