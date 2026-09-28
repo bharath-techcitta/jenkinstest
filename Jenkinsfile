@@ -7,13 +7,14 @@ pipeline {
     // }
 
     environment {
-        // Securely retrieve your Vercel Deploy Hook URL from Jenkins Credentials (Secret Text)
-        // Jenkins Credential ID: 'vercel-deploy-hook'
-        VERCEL_DEPLOY_HOOK = credentials('vercel-deploy-hook')
+        // Automatically injects credentials from Jenkins (Secret Text)
+        VERCEL_TOKEN      = credentials('vercel-token')
+        VERCEL_ORG_ID     = credentials('vercel-org-id')
+        VERCEL_PROJECT_ID = credentials('vercel-project-id')
     }
 
     stages {
-        stage('Checkout Source') {
+        stage('Checkout') {
             steps {
                 echo 'Checking out source code from Git repository...'
                 checkout scm
@@ -22,7 +23,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo 'Installing project dependencies with npm ci...'
+                echo 'Installing dependencies with npm ci...'
                 script {
                     if (isUnix()) {
                         sh 'npm ci'
@@ -33,48 +34,15 @@ pipeline {
             }
         }
 
-        stage('Verify & Build') {
+        stage('Build & Deploy to Vercel via CLI') {
             steps {
-                echo 'Building and validating Vite production bundle...'
+                echo 'Building and deploying to Vercel Production via Vercel CLI...'
                 script {
                     if (isUnix()) {
-                        sh 'npm run build'
+                        sh 'npx --yes vercel --prod --token="${VERCEL_TOKEN}" --yes'
                     } else {
-                        bat 'npm run build'
+                        bat 'npx --yes vercel --prod --token="%VERCEL_TOKEN%" --yes'
                     }
-                }
-            }
-        }
-
-        stage('Deploy to Vercel') {
-            steps {
-                echo 'Build verified successfully! Triggering deployment to Vercel...'
-                script {
-                    // Option 1: Vercel Deploy Hook (Recommended - zero setup, reliable)
-                    if (isUnix()) {
-                        sh '''
-                            response=$(curl -s -o response.txt -w "%{http_code}" -X POST "${VERCEL_DEPLOY_HOOK}")
-                            echo "Vercel Deploy Hook HTTP Response: ${response}"
-                            cat response.txt
-                            if [ "$response" -lt 200 ] || [ "$response" -ge 300 ]; then
-                                echo "ERROR: Vercel deploy hook failed with status ${response}"
-                                exit 1
-                            fi
-                        '''
-                    } else {
-                        bat '''
-                            curl.exe -s -o response.txt -w "%%{http_code}" -X POST "%VERCEL_DEPLOY_HOOK%"
-                            type response.txt
-                        '''
-                    }
-
-                    // Option 2 (Alternative): If you prefer Vercel CLI instead of Deploy Hook,
-                    // comment out the curl above, add VERCEL_TOKEN credentials, and use:
-                    // if (isUnix()) {
-                    //     sh 'npx --yes vercel --prod --token="${VERCEL_TOKEN}" --yes'
-                    // } else {
-                    //     bat 'npx --yes vercel --prod --token="%VERCEL_TOKEN%" --yes'
-                    // }
                 }
             }
         }
@@ -83,14 +51,12 @@ pipeline {
     post {
         success {
             echo '=================================================='
-            echo ' SUCCESS: Pipeline completed!'
-            echo ' Vercel deployment triggered and is now going live.'
+            echo ' SUCCESS: Deployment to Vercel via CLI succeeded!'
             echo '=================================================='
         }
         failure {
             echo '=================================================='
-            echo ' FAILURE: Build or verification failed.'
-            echo ' Vercel deployment was blocked.'
+            echo ' FAILURE: Pipeline failed. Deployment aborted.'
             echo '=================================================='
         }
     }
