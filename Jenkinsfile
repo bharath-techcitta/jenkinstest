@@ -7,7 +7,7 @@ pipeline {
     // }
 
     environment {
-        // Automatically injects credentials from Jenkins (Secret Text)
+        // Injected automatically from Jenkins Global Credentials (Secret Text)
         VERCEL_TOKEN      = credentials('vercel-token')
         VERCEL_ORG_ID     = credentials('vercel-org-id')
         VERCEL_PROJECT_ID = credentials('vercel-project-id')
@@ -23,7 +23,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo 'Installing dependencies with npm ci...'
+                echo 'Installing project dependencies with npm ci...'
                 script {
                     if (isUnix()) {
                         sh 'npm ci'
@@ -34,14 +34,40 @@ pipeline {
             }
         }
 
-        stage('Build & Deploy to Vercel via CLI') {
+        stage('Pull Vercel Environment') {
             steps {
-                echo 'Building and deploying to Vercel Production via Vercel CLI...'
+                echo 'Pulling Vercel production project settings and environment...'
                 script {
                     if (isUnix()) {
-                        sh 'npx --yes vercel --prod --token="${VERCEL_TOKEN}" --yes'
+                        sh 'npx --yes vercel pull --yes --environment=production --token="${VERCEL_TOKEN}"'
                     } else {
-                        bat 'npx --yes vercel --prod --token="%VERCEL_TOKEN%" --yes'
+                        bat 'npx --yes vercel pull --yes --environment=production --token="%VERCEL_TOKEN%"'
+                    }
+                }
+            }
+        }
+
+        stage('Build Vercel Artifacts') {
+            steps {
+                echo 'Building production bundle using Vercel build...'
+                script {
+                    if (isUnix()) {
+                        sh 'npx --yes vercel build --prod --token="${VERCEL_TOKEN}"'
+                    } else {
+                        bat 'npx --yes vercel build --prod --token="%VERCEL_TOKEN%"'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Vercel Production') {
+            steps {
+                echo 'Deploying prebuilt production bundle to Vercel...'
+                script {
+                    if (isUnix()) {
+                        sh 'npx --yes vercel deploy --prebuilt --prod --token="${VERCEL_TOKEN}"'
+                    } else {
+                        bat 'npx --yes vercel deploy --prebuilt --prod --token="%VERCEL_TOKEN%"'
                     }
                 }
             }
@@ -51,12 +77,12 @@ pipeline {
     post {
         success {
             echo '=================================================='
-            echo ' SUCCESS: Deployment to Vercel via CLI succeeded!'
+            echo ' SUCCESS: Project deployed to Vercel Production!'
             echo '=================================================='
         }
         failure {
             echo '=================================================='
-            echo ' FAILURE: Pipeline failed. Deployment aborted.'
+            echo ' FAILURE: Pipeline failed. Check console log above.'
             echo '=================================================='
         }
     }
