@@ -64,9 +64,18 @@ resource "aws_amplify_branch" "branch" {
   framework = "React"
   stage     = upper(var.environment)
 
-  enable_auto_build = true
+  # Disabled auto-build so builds are controlled solely by Jenkins
+  enable_auto_build = false
 
   environment_variables = {
     VITE_APP_ENV = var.environment
   }
 }
+
+# Incoming Webhook for Jenkins to trigger deployments after verification
+resource "aws_amplify_webhook" "jenkins_trigger" {
+  app_id      = aws_amplify_app.app.id
+  branch_name = aws_amplify_branch.branch.branch_name
+  description = "Triggered by Jenkins pipeline upon verified build"
+}
+

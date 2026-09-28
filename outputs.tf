@@ -17,3 +17,10 @@ output "deployed_branch_url" {
   description = "Live URL of the deployed branch"
   value       = "https://${var.branch_name}.${aws_amplify_app.app.default_domain}"
 }
+
+output "amplify_webhook_url" {
+  description = "Amplify incoming webhook URL to configure in Jenkins credentials ('amplify-webhook-url')"
+  value       = aws_amplify_webhook.jenkins_trigger.url
+  sensitive   = true
+}
+
